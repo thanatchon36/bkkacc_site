@@ -3,6 +3,7 @@ from .models import Company, Service, Notification, Holiday, Report, ReportDetai
 from django.db.models import Avg, Count, Min, Sum
 from invoice.models import Service, Company, Report
 # from admin_auto_filters.filters import AutocompleteFilter
+test = 5
 
 class NotificationInline(admin.TabularInline):
     model = Notification
