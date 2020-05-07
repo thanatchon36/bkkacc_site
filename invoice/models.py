@@ -82,11 +82,6 @@ class Report(TimeStampMixin):
         verbose_name_plural = "รายงานเรียกเก็บเงิน"
         verbose_name = "รายงานเรียกเก็บเงิน"
 
-    def sum_price(self):
-        number = self.reportdetail_set.aggregate(sum_price = Sum('price'))['sum_price']
-        return number
-    sum_price.short_description = 'ค่าบริการรวม'
-    sum_price.admin_order_field = 'ค่าบริการรวม'
 
     def save(self,*args,**kwargs):
         created = not self.pk
@@ -164,6 +159,7 @@ class ReportDetailStatus(TimeStampMixin):
         verbose_name_plural = "สถานะเรียกเก็บเงิน"
         verbose_name = "สถานะเรียกเก็บเงิน"
 
+
 class ReportDetail(TimeStampMixin):
     report = models.ForeignKey(Report, on_delete=models.CASCADE,verbose_name='รายงาน')
     service = models.ForeignKey(Service, on_delete=models.CASCADE,verbose_name='บริการ')
@@ -180,6 +176,10 @@ class ReportDetail(TimeStampMixin):
     class Meta:
         verbose_name_plural = "รายละเอียดเรียกเก็บเงิน"
         verbose_name = "รายละเอียดเรียกเก็บเงิน"
+
+    # def company(self):
+    #     return self.report.company
+    # company.short_description = 'บริษัท'
 
     # def is_activated(self):
     #     if self.status.id == 1:

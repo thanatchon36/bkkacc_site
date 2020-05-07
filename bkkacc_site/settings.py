@@ -33,6 +33,7 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
+    'rangefilter',
     'invoice.apps.InvoiceConfig',
     'django.contrib.admin',
     'django.contrib.auth',
