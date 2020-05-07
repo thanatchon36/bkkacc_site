@@ -99,7 +99,7 @@ class HolidayAdmin(admin.ModelAdmin):
 
 class ReportAdmin(admin.ModelAdmin):
     search_fields = ['id','company__name']
-    list_display = ('id','company','notpaid_sum','price_sum','start_date','end_date','note','created_at')
+    list_display = ('id','company','notpaid_sum','price_sum','start_date','end_date','first_invoice')
 
     autocomplete_fields = ['company']
     inlines = [ReportDetailInline]
@@ -108,7 +108,8 @@ class ReportAdmin(admin.ModelAdmin):
         queryset = super().get_queryset(request)
         queryset = queryset.annotate(
             _price_sum = Sum("reportdetail__price"),
-            _notpaid_sum = Sum("reportdetail__price",filter=Q(reportdetail__status=1))
+            _notpaid_sum = Sum("reportdetail__price",filter=Q(reportdetail__status=1)),
+            _first_invoice = Min("reportdetail__invoice_date",filter=Q(reportdetail__status=1)),
         )
         return queryset
     def price_sum(self, obj):
@@ -119,6 +120,21 @@ class ReportAdmin(admin.ModelAdmin):
         return obj._notpaid_sum
     notpaid_sum.admin_order_field = '_notpaid_sum'
     notpaid_sum.short_description = 'ยังไม่จ่าย'
+
+    def first_invoice(self, obj):
+        return obj._first_invoice
+    first_invoice.admin_order_field = '_first_invoice'
+    first_invoice.short_description = 'วันค้างชำระล่าสุด'
+
+    list_filter = [ 'company',
+                    'start_date',
+                    # 'first_invoice',
+                    # '_first_invoice',
+                    # ('_first_invoice', DateRangeFilter),
+                    ('start_date', DateRangeFilter),
+                    ('start_date', DateRangeFilter),
+                    ('end_date', DateRangeFilter),
+                ]
 
 
     # readonly_fields=('get_id',)
@@ -148,7 +164,7 @@ class ReportDetailAdmin(admin.ModelAdmin):
     search_fields = ['report__company__name','report__id','service__name','report__company__tax_id']
     # search_fields = ['service__name']
     autocomplete_fields = ['service']
-    list_display = ['get_report_id','company','service','price','invoice_date','status','created_at']
+    list_display = ['get_report_id','company','service','price','invoice_date','status','is_activated','created_at']
     actions = [make_printed,make_not_printed]
 
     list_filter = [ 'status',
@@ -170,7 +186,13 @@ class ReportDetailAdmin(admin.ModelAdmin):
     def get_report_id(self, obj):
         return obj.report.id
     get_report_id.short_description = 'เลขที่รายงาน'
-    # get_id.admin_order_field = 'id'
+    
+    def is_activated(self, obj):
+        if obj.status.id == 1:
+            return False
+        return True
+    is_activated.boolean = True
+    is_activated.short_description = "สถานะ"
 
 class ReportDetailStatusAdmin(admin.ModelAdmin):
     list_display = ('id', 'name','created_at')
