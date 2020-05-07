@@ -70,9 +70,12 @@ class Notification(TimeStampMixin):
 
 
 class Report(TimeStampMixin):
+    id = models.CharField(max_length = 10,primary_key=True, verbose_name= 'เลขที่รายงาน')
+    # id = models.AutoField(primary_key=True, verbose_name= 'เลขที่รายงาน')
+
     company = models.ForeignKey(Company, on_delete=models.CASCADE,verbose_name='ชื่อบริษัท')
     start_date = models.DateField(verbose_name='วันเริ่มต้นเรียกเก็บ')
-    end_date = models.DateField(verbose_name='วันสิ้นสุนเรียกเก็บ')
+    end_date = models.DateField(verbose_name='วันสิ้นสุดเรียกเก็บ')
     note = models.TextField(blank = True, verbose_name='จดบันทึก')
 
     def __str__(self):
@@ -82,10 +85,14 @@ class Report(TimeStampMixin):
         verbose_name_plural = "รายงานเรียกเก็บเงิน"
         verbose_name = "รายงานเรียกเก็บเงิน"
 
-
+    
     def save(self,*args,**kwargs):
-        created = not self.pk
+        # created = not self.pk
+        # created = self.pk is None
+        created = self._state.adding == True
         super().save(*args,**kwargs)
+
+
         if created:
             noti = Notification.objects.filter(company = self.company)
             holi_df = pd.DataFrame(list(Holiday.objects.all().values('name', 'date', 'month')))
@@ -110,7 +117,6 @@ class Report(TimeStampMixin):
                             return False
 
                     date_range = list(filter(filter_date, date_range))
-                    
                     for each_2 in date_range:
                         HOLIDAY_NOTE = []
                         noti_datetime = each_2
@@ -146,6 +152,7 @@ class Report(TimeStampMixin):
                                 noti_datetime+= relativedelta(days=1)
                         r_detail = ReportDetail(report=self,
                                                 service=each_1.service,price=each_1.price,
+                                                note = ','.join(HOLIDAY_NOTE),
                                                 invoice_date=noti_datetime)
                         r_detail.save()
 

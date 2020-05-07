@@ -39,40 +39,51 @@ class ReportDetailInline(admin.TabularInline):
     autocomplete_fields = ['service']
 
     
-class UIDFilter(InputFilter):
-    parameter_name = 'name'
-    title = ('ชื่อบริษัท')
+# class UIDFilter(InputFilter):
+#     parameter_name = 'name'
+#     title = ('ชื่อบริษัท')
  
-    def queryset(self, request, queryset):
-        if self.value() is not None:
-            uid = self.value()
-            return queryset.filter(
-                Q(name=uid)
-            )
+#     def queryset(self, request, queryset):
+#         if self.value() is not None:
+#             uid = self.value()
+#             return queryset.filter(
+#                 Q(name=uid)
+#             )
 
-class TAXFilter(InputFilter):
-    parameter_name = 'tax_id'
-    title = ('เลข')
+# class TAXFilter(InputFilter):
+#     parameter_name = 'tax_id'
+#     title = ('เลข')
  
-    def queryset(self, request, queryset):
-        if self.value() is not None:
-            uid = self.value()
-            return queryset.filter(
-                Q(tax_id=uid)
-            )
+#     def queryset(self, request, queryset):
+#         if self.value() is not None:
+#             uid = self.value()
+#             return queryset.filter(
+#                 Q(tax_id=uid)
+#             )
 
 class CompanyAdmin(admin.ModelAdmin):
-    search_fields = ('name', 'tax_id', 'email','start_date')
+    search_fields = ('name', 'tax_id', 'email')
     list_display = ('name', 'tax_id', 'email','start_date')
     inlines = [NotificationInline]
     list_filter = (
-        UIDFilter,
-        TAXFilter,
+        'start_date',
+        ('start_date', DateRangeFilter),
     )
-    # search_form = YourFormSearch
+    
+    # readonly_fields=('get_id',)
 
+    # fieldsets = [
+    #     (None,               {'fields': ['get_id','name','tax_id','email','start_date']}),
+    # ]
 
+    # def get_id(self, obj):
+    #     return obj.id
+    # get_id.short_description = 'เลขที่บริษัท'
 
+    # fieldsets = [
+    #     (None,               {'fields': ['question_text']}),
+    #     ('Date information', {'fields': ['pub_date'], 'classes': ['collapse']}),
+    # ]
 
 class ServiceAdmin(admin.ModelAdmin):
     search_fields = ['name']
@@ -87,9 +98,9 @@ class HolidayAdmin(admin.ModelAdmin):
     list_display = ('name', 'date', 'month','created_at')
 
 class ReportAdmin(admin.ModelAdmin):
-    # search_fields = ['id','company__name','start_date','end_date']
-    search_fields = ['company__name']
-    list_display = ('id','company','price_sum','start_date','end_date','note','created_at')
+    search_fields = ['id','company__name']
+    list_display = ('id','company','notpaid_sum','price_sum','start_date','end_date','note','created_at')
+
     autocomplete_fields = ['company']
     inlines = [ReportDetailInline]
 
@@ -97,14 +108,31 @@ class ReportAdmin(admin.ModelAdmin):
         queryset = super().get_queryset(request)
         queryset = queryset.annotate(
             _price_sum = Sum("reportdetail__price"),
+            _notpaid_sum = Sum("reportdetail__price",filter=Q(reportdetail__status=1))
         )
         return queryset
     def price_sum(self, obj):
         return obj._price_sum
-
     price_sum.admin_order_field = '_price_sum'
     price_sum.short_description = 'ค่าบริการรวม'
+    def notpaid_sum(self, obj):
+        return obj._notpaid_sum
+    notpaid_sum.admin_order_field = '_notpaid_sum'
+    notpaid_sum.short_description = 'ยังไม่จ่าย'
 
+
+    # readonly_fields=('get_id',)
+    # def get_id(self, obj):
+    #     return obj.id
+    # get_id.short_description = 'เลขที่รายงาน'
+    # get_id.admin_order_field = 'id'
+
+    # list_filter = [ 'created_at',
+    #                 'end_date',
+    #                 ('start_date', DateRangeFilter),
+    #                 ('end_date', DateRangeFilter),
+    #             ]
+    
 
 
 def make_printed(modeladmin, request, queryset):
@@ -117,12 +145,14 @@ make_not_printed.short_description = "ไม่พิมพ์ทั้งหม
 
 
 class ReportDetailAdmin(admin.ModelAdmin):
-    search_fields = ['report__company__name']
+    search_fields = ['report__company__name','report__id','service__name','report__company__tax_id']
+    # search_fields = ['service__name']
     autocomplete_fields = ['service']
-    list_display = ['id','company','service','invoice_date','status','created_at']
+    list_display = ['get_report_id','company','service','price','invoice_date','status','created_at']
     actions = [make_printed,make_not_printed]
 
-    list_filter = [ 'service',
+    list_filter = [ 'status',
+                    'service',
                     'invoice_date',
                     # ('invoice_date', DateTimeRangeFilter),
                     ('invoice_date', DateRangeFilter),
@@ -130,12 +160,17 @@ class ReportDetailAdmin(admin.ModelAdmin):
 
     date_hierarchy = 'invoice_date'
 
-    def has_delete_permission(self, request, obj=None):
-        return False
+    # def has_delete_permission(self, request, obj=None):
+    #     return False
 
     def company(self, obj):
         return obj.report.company
     company.short_description = 'บริษัท'
+
+    def get_report_id(self, obj):
+        return obj.report.id
+    get_report_id.short_description = 'เลขที่รายงาน'
+    # get_id.admin_order_field = 'id'
 
 class ReportDetailStatusAdmin(admin.ModelAdmin):
     list_display = ('id', 'name','created_at')
@@ -144,7 +179,7 @@ admin.site.register(Company,CompanyAdmin)
 admin.site.register(Service,ServiceAdmin)
 admin.site.register(Holiday,HolidayAdmin)
 admin.site.register(Report,ReportAdmin)
-admin.site.register(ReportDetailStatus,ReportDetailStatusAdmin)
 admin.site.register(ReportDetail,ReportDetailAdmin)
+# admin.site.register(ReportDetailStatus,ReportDetailStatusAdmin)
 # admin.site.register(Notification, NotificationAdmin)
 # Register your models here.
