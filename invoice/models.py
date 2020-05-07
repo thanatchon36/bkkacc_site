@@ -82,81 +82,77 @@ class Report(TimeStampMixin):
         verbose_name_plural = "รายงานเรียกเก็บเงิน"
         verbose_name = "รายงานเรียกเก็บเงิน"
 
-    @property
     def sum_price(self):
-        return self.reportdetail_set.aggregate(sum_price = Sum('price'))['sum_price']
+        number = self.reportdetail_set.aggregate(sum_price = Sum('price'))['sum_price']
+        return number
+    sum_price.short_description = 'ค่าบริการรวม'
+    sum_price.admin_order_field = 'ค่าบริการรวม'
 
     def save(self,*args,**kwargs):
         created = not self.pk
         super().save(*args,**kwargs)
         if created:
-            print(self.company.name)            
-            #(company= self.company)
-            print(self.id)
             noti = Notification.objects.filter(company = self.company)
             holi_df = pd.DataFrame(list(Holiday.objects.all().values('name', 'date', 'month')))
-            # print(holi_df)
 
-            for each_1 in noti:
-                date_range = pd.date_range(self.start_date, self.end_date).tolist()
-                date_range = map(lambda x: x.date(), date_range)
+            with transaction.atomic():
+                for each_1 in noti:
+                    date_range = pd.date_range(self.start_date, self.end_date).tolist()
+                    date_range = map(lambda x: x.date(), date_range)
 
-                def filter_date(date):
-                    max_date = datetime.datetime(date.year, date.month, 1) + relativedelta(months=1) - relativedelta(days=1)
-                    max_date = max_date.day
-                    noti_date = each_1.date 
-                    if  noti_date >= max_date:
-                        correct_date = max_date
-                    else:
-                        correct_date = noti_date
+                    def filter_date(date):
+                        max_date = datetime.datetime(date.year, date.month, 1) + relativedelta(months=1) - relativedelta(days=1)
+                        max_date = max_date.day
+                        noti_date = each_1.date 
+                        if  noti_date >= max_date:
+                            correct_date = max_date
+                        else:
+                            correct_date = noti_date
 
-                    if date.day == correct_date:
-                        return True
-                    else:
-                        return False
+                        if date.day == correct_date:
+                            return True
+                        else:
+                            return False
 
-                date_range = list(filter(filter_date, date_range))
-                print(date_range)
-
-                for each_2 in date_range:
-                    HOLIDAY_NOTE = []
-                    noti_datetime = each_2
-                    base_noti_datetime = noti_datetime
-                    noti_mon = noti_datetime.month
-
-                    while (noti_datetime.weekday() == 5 or noti_datetime.weekday() == 6) or\
-                    len(holi_df[(holi_df['date'] == noti_datetime.day) &\
-                    (holi_df['month'] == noti_datetime.month)]) >= 1:
-
-                        if len(holi_df[(holi_df['date'] == noti_datetime.day) &\
-                            (holi_df['month'] == noti_datetime.month)]) >= 1:
-                            
-                            HOLIDAY_NOTE.append(holi_df[(holi_df['date'] == noti_datetime.day) &\
-                            (holi_df['month'] == noti_datetime.month)]['name'].tolist()[0])
-                        
-                        noti_datetime-= relativedelta(days=1)
-
+                    date_range = list(filter(filter_date, date_range))
                     
-                    if noti_mon != noti_datetime.month:
-                        noti_datetime = base_noti_datetime
+                    for each_2 in date_range:
                         HOLIDAY_NOTE = []
+                        noti_datetime = each_2
+                        base_noti_datetime = noti_datetime
+                        noti_mon = noti_datetime.month
+
                         while (noti_datetime.weekday() == 5 or noti_datetime.weekday() == 6) or\
-                            len(holi_df[(holi_df['date'] == noti_datetime.day) &\
-                            (holi_df['month'] == noti_datetime.month)]) >= 1:
+                        len(holi_df[(holi_df['date'] == noti_datetime.day) &\
+                        (holi_df['month'] == noti_datetime.month)]) >= 1:
 
                             if len(holi_df[(holi_df['date'] == noti_datetime.day) &\
                                 (holi_df['month'] == noti_datetime.month)]) >= 1:
                                 
                                 HOLIDAY_NOTE.append(holi_df[(holi_df['date'] == noti_datetime.day) &\
                                 (holi_df['month'] == noti_datetime.month)]['name'].tolist()[0])
-                        
-                            noti_datetime+= relativedelta(days=1)
+                            
+                            noti_datetime-= relativedelta(days=1)
 
-                    print(noti_datetime)
-                    r_detail = ReportDetail(report=self,
-                                            service=each_1.service,price=each_1.price,
-                                            invoice_date=noti_datetime)
-                    r_detail.save()
+                        
+                        if noti_mon != noti_datetime.month:
+                            noti_datetime = base_noti_datetime
+                            HOLIDAY_NOTE = []
+                            while (noti_datetime.weekday() == 5 or noti_datetime.weekday() == 6) or\
+                                len(holi_df[(holi_df['date'] == noti_datetime.day) &\
+                                (holi_df['month'] == noti_datetime.month)]) >= 1:
+
+                                if len(holi_df[(holi_df['date'] == noti_datetime.day) &\
+                                    (holi_df['month'] == noti_datetime.month)]) >= 1:
+                                    
+                                    HOLIDAY_NOTE.append(holi_df[(holi_df['date'] == noti_datetime.day) &\
+                                    (holi_df['month'] == noti_datetime.month)]['name'].tolist()[0])
+                            
+                                noti_datetime+= relativedelta(days=1)
+                        r_detail = ReportDetail(report=self,
+                                                service=each_1.service,price=each_1.price,
+                                                invoice_date=noti_datetime)
+                        r_detail.save()
 
                     
 
@@ -184,6 +180,15 @@ class ReportDetail(TimeStampMixin):
     class Meta:
         verbose_name_plural = "รายละเอียดเรียกเก็บเงิน"
         verbose_name = "รายละเอียดเรียกเก็บเงิน"
+
+    # def is_activated(self):
+    #     if self.status.id == 1:
+    #         return False
+    #     return True
+
+    # is_activated.boolean = True
+    # is_activated.short_description = "สถานะ"
+
 
 
 
