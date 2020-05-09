@@ -17,8 +17,10 @@ from django.contrib import admin
 from django.urls import path
 from django.urls import include, path
 from django.conf.urls import url
+from controlcenter.views import controlcenter
 
 urlpatterns = [
+    path('admin/dashboard/', controlcenter.urls),
     path('admin/', admin.site.urls),
     url(r'^advanced_filters/', include('advanced_filters.urls'))
 ]

@@ -12,6 +12,21 @@ admin.site.site_header = "BKK ACC Admin"
 admin.site.site_title = "BKK ACC Admin Portal"
 admin.site.index_title = "Welcome to BKK ACC Portal"
 
+from controlcenter import Dashboard, widgets
+
+class ModelItemList(widgets.ItemList):
+    model = ReportDetail
+    list_display = ('id','company','service','price','invoice_date','status','created_at')
+
+    def company(self, obj):
+        return obj.report.company
+    company.short_description = 'บริษัท'
+
+class MyDashboard(Dashboard):
+    widgets = (
+        ModelItemList,
+    )
+
 class InputFilter(admin.SimpleListFilter):
     template = 'admin/input_filter.html'
 

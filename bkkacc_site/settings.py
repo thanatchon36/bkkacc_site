@@ -31,10 +31,10 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['*']
 
-
 # Application definition
 
 INSTALLED_APPS = [
+    'controlcenter',
     'advanced_filters',
     'rangefilter',
     'invoice.apps.InvoiceConfig',
@@ -45,6 +45,10 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 ]
+
+CONTROLCENTER_DASHBOARDS = (
+    ('mydash', 'invoice.admin.MyDashboard'),
+)
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
