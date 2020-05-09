@@ -6,6 +6,8 @@ from django.forms import DateField, CharField, ChoiceField, TextInput
 from django.db.models import Q
 from rangefilter.filter import DateRangeFilter, DateTimeRangeFilter
 
+from advanced_filters.admin import AdminAdvancedFiltersMixin
+
 admin.site.site_header = "BKK ACC Admin"
 admin.site.site_title = "BKK ACC Admin Portal"
 admin.site.index_title = "Welcome to BKK ACC Portal"
@@ -61,13 +63,25 @@ class ReportDetailInline(admin.TabularInline):
 #                 Q(tax_id=uid)
 #             )
 
-class CompanyAdmin(admin.ModelAdmin):
+# class CompanyAdmin(admin.ModelAdmin):
+class CompanyAdmin(AdminAdvancedFiltersMixin, admin.ModelAdmin):
     search_fields = ('name', 'tax_id', 'email')
     list_display = ('name', 'tax_id', 'email','start_date')
     inlines = [NotificationInline]
     list_filter = (
         'start_date',
         ('start_date', DateRangeFilter),
+    )
+
+    advanced_filter_fields = (
+        'name',
+        'tax_id',
+        'email',
+        'start_date',
+        # # even use related fields as lookup fields
+        # 'country__name',
+        # 'posts__title',
+        # 'comments__content',
     )
     
     # readonly_fields=('get_id',)
@@ -89,6 +103,7 @@ class ServiceAdmin(admin.ModelAdmin):
     search_fields = ['name']
     list_display = ('name', 'detail')
 
+
 class NotificationAdmin(admin.ModelAdmin):
     autocomplete_fields = ['company','service']
 
@@ -97,7 +112,7 @@ class HolidayAdmin(admin.ModelAdmin):
     search_fields = ['name']
     list_display = ('name', 'date', 'month','created_at')
 
-class ReportAdmin(admin.ModelAdmin):
+class ReportAdmin(AdminAdvancedFiltersMixin, admin.ModelAdmin):
     search_fields = ['id','company__name']
     list_display = ('id','company','notpaid_sum','price_sum','start_date','end_date','first_invoice')
 
@@ -132,9 +147,21 @@ class ReportAdmin(admin.ModelAdmin):
                     # '_first_invoice',
                     # ('_first_invoice', DateRangeFilter),
                     ('start_date', DateRangeFilter),
-                    ('start_date', DateRangeFilter),
                     ('end_date', DateRangeFilter),
                 ]
+
+    advanced_filter_fields = (
+        'company',
+        'start_date',
+        'end_date',
+        # '_price_sum',
+        # 'notpaid_sum',
+        # 'first_invoice',
+        # # even use related fields as lookup fields
+        # 'country__name',
+        # 'posts__title',
+        # 'comments__content',
+    )
 
 
     # readonly_fields=('get_id',)

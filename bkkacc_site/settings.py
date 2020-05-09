@@ -35,6 +35,7 @@ ALLOWED_HOSTS = ['*']
 # Application definition
 
 INSTALLED_APPS = [
+    'advanced_filters',
     'rangefilter',
     'invoice.apps.InvoiceConfig',
     'django.contrib.admin',
