@@ -22,6 +22,9 @@ from controlcenter.views import controlcenter
 urlpatterns = [
     path('jet_api/', include('jet_django.urls')),
     path('admin/dashboard/', controlcenter.urls),
+    url(r'^jet/', include('jet.urls', 'jet')),
+    # url(r'^jet/', include('jet.urls', 'jet')),  # Django JET URLS
+    url(r'^jet/dashboard/', include('jet.dashboard.urls', 'jet-dashboard')),  # Django JET dashboard URLS
     path('admin/', admin.site.urls),
     url(r'^advanced_filters/', include('advanced_filters.urls'))
 ]

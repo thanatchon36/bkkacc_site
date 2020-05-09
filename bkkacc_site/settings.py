@@ -42,12 +42,15 @@ INSTALLED_APPS = [
     'advanced_filters',
     'rangefilter',
     'invoice.apps.InvoiceConfig',
-    'django.contrib.admin',
+    # 'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'jet.dashboard',
+    'jet',
+    'django.contrib.admin',
 ]
 
 CONTROLCENTER_DASHBOARDS = (
