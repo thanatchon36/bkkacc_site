@@ -20,6 +20,7 @@ from django.conf.urls import url
 from controlcenter.views import controlcenter
 
 urlpatterns = [
+    path('jet_api/', include('jet_django.urls')),
     path('admin/dashboard/', controlcenter.urls),
     path('admin/', admin.site.urls),
     url(r'^advanced_filters/', include('advanced_filters.urls'))

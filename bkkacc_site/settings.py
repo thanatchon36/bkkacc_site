@@ -31,9 +31,13 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['*']
 
+JET_PROJECT = 'bkk_acc'
+JET_TOKEN = '797657aa-ffd2-4a8f-a30a-b0984b1b0856'
+
 # Application definition
 
 INSTALLED_APPS = [
+    'jet_django',
     'controlcenter',
     'advanced_filters',
     'rangefilter',
